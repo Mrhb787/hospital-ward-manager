@@ -20,8 +20,6 @@ func main() {
 	// get app config
 	appConfig := configs.New()
 
-	fmt.Println(appConfig.DBConfig)
-
 	// initalize services
 	healthService := health.NewService()
 
