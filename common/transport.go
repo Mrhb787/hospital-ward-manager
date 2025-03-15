@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -180,22 +178,4 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func ServerErrorEncoder(ee ErrorEncoder) ServerOption {
 	return func(s *Server) { s.errorEncoder = ee }
-}
-
-func ServeIndexHTML(w http.ResponseWriter, r *http.Request) {
-	htmlFile := filepath.Join("public", "index.html")
-
-	// Read the HTML file
-	htmlBytes, err := ioutil.ReadFile(htmlFile)
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		fmt.Println("Error reading index.html:", err)
-		return
-	}
-
-	// Set Content-Type header
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// Write the HTML to the response
-	w.Write(htmlBytes)
 }
