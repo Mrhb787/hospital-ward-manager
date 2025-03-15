@@ -3,15 +3,11 @@ package transport
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 )
-
-type healthRequest struct {
-}
-
-type healthResponse struct {
-	Status string `json:"status"`
-}
 
 type httpResponse interface {
 	error() error
@@ -19,6 +15,13 @@ type httpResponse interface {
 
 type data interface {
 	data() interface{}
+}
+
+type healthRequest struct {
+}
+
+type healthResponse struct {
+	Status string `json:"status"`
 }
 
 func (r healthResponse) error() error {
@@ -29,16 +32,19 @@ func (r healthResponse) data() interface{} {
 	return r.Status
 }
 
-func GenericSuccessResponse(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(data)
+type GetUserByIdReqquest struct {
+	UserId uint32
 }
 
-func GenericErrorResponse(w http.ResponseWriter, code int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(map[string]string{"error": message})
+func EncodeGenericResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	if resp, ok := response.(httpResponse); ok && resp.error() != nil {
+		resp.error()
+	}
+
+	w.Header().Set("Content-Type", "application/health; charset=utf-8")
+	return json.NewEncoder(w).Encode(map[string]interface{}{
+		"response": response,
+	})
 }
 
 func DecodeHealthRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
@@ -58,4 +64,22 @@ func EncodeHealthResponse(ctx context.Context, w http.ResponseWriter, response i
 	return json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": response.(data).data(),
 	})
+}
+
+func DecodeGetUserByIdRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
+	req := GetUserByIdReqquest{}
+
+	userIdStr := r.URL.Query().Get("user_id")
+	if userIdStr == "" {
+		return req, errors.New("invalid user id")
+	}
+
+	userId, err := strconv.Atoi(userIdStr)
+	if err != nil {
+		fmt.Println("invalid user id ", err)
+		return req, errors.New("invalid user id")
+	}
+	req.UserId = uint32(userId)
+
+	return req, nil
 }
