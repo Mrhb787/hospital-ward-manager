@@ -14,7 +14,7 @@ import (
 //go:embed main.html
 var mainHTML []byte
 
-var dbService database.Service
+var httpTransportRequest transport.HttpHandlerRequest
 
 func init() {
 	// app config
@@ -28,6 +28,13 @@ func init() {
 	if err != nil || client == nil {
 		log.Fatal("failed to connect database", err)
 	}
+
+	// health service
+	healthService := health.NewService()
+
+	// map http services
+	httpTransportRequest.DbService = dbService
+	httpTransportRequest.HealthService = healthService
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -38,14 +45,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// initalize services
-	healthService := health.NewService()
-
 	// http handler
-	h := transport.NewHandler(transport.HttpHandlerRequest{
-		HealthService: healthService,
-		DbService:     dbService,
-	})
+	h := transport.NewHandler(httpTransportRequest)
 
 	// serve http
 	h.ServeHTTP(w, r)

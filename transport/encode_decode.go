@@ -37,11 +37,7 @@ type GetUserByIdReqquest struct {
 }
 
 func EncodeGenericResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if resp, ok := response.(httpResponse); ok && resp.error() != nil {
-		resp.error()
-	}
-
-	w.Header().Set("Content-Type", "application/health; charset=utf-8")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": response,
 	})
