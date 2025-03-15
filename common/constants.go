@@ -17,3 +17,10 @@ func (s MethodType) ToString() string {
 type ServicePort string
 
 const LOCAL_SERVICE_PORT ServicePort = "8080"
+
+type HttpHandlerType string
+
+const (
+	VERCEL HttpHandlerType = "VERCEL"
+	BASE   HttpHandlerType = "BASE"
+)

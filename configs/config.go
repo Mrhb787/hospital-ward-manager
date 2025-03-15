@@ -36,7 +36,7 @@ type AppConfig struct {
 
 func (db DBConfig) new() DBConfig {
 	return DBConfig{
-		Host:     getEnv("DB_HOST", ""),
+		Host:     getEnv("DB_HOST", "postgres://neondb_owner:npg_E7DMQAm4ayRf@ep-quiet-frost-a1oukqpx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"),
 		Name:     getEnv("DB_NAME", ""),
 		User:     getEnv("DB_ADMIN", ""),
 		Password: getEnv("DB_ADMIN_PASSWORD", ""),
