@@ -4,13 +4,15 @@ import (
 	"context"
 
 	"github.com/Mrhb787/hospital-ward-manager/common"
+	"github.com/Mrhb787/hospital-ward-manager/service/http/auth"
 	"github.com/Mrhb787/hospital-ward-manager/service/http/database"
 	"github.com/Mrhb787/hospital-ward-manager/service/http/health"
+	"github.com/Mrhb787/hospital-ward-manager/service/http/redis"
 )
 
 type Endpoints struct {
 	HeathCheckEndpoint common.Endpoint
-	GetUserEndpoint    common.Endpoint
+	SignInUserEndpoint common.Endpoint
 }
 
 func MakeHealthEndpoints(s health.Service) Endpoints {
@@ -19,9 +21,9 @@ func MakeHealthEndpoints(s health.Service) Endpoints {
 	}
 }
 
-func MakeHttpServiceEndpoints(dbService database.Service) Endpoints {
+func MakeHttpServiceEndpoints(dbService database.Service, redisService redis.Service, authService auth.Service) Endpoints {
 	return Endpoints{
-		GetUserEndpoint: MakeGetUserEndpoint(dbService),
+		SignInUserEndpoint: MakeSignInUserEndpoint(authService),
 	}
 }
 
@@ -34,9 +36,15 @@ func MakeHealthEndpoint(s health.Service) common.Endpoint {
 	}
 }
 
-func MakeGetUserEndpoint(dbService database.Service) common.Endpoint {
+func MakeSignInUserEndpoint(authService auth.Service) common.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		resp, err := dbService.GetUserById(1)
-		return resp, err
+		req := request.(SignInUserRequest)
+
+		resp, err := authService.SignIn(ctx, auth.SignInUserRequest{PhoneNumber: req.Phone, Password: req.Password})
+		if err != nil {
+			return resp, err
+		}
+
+		return resp, nil
 	}
 }

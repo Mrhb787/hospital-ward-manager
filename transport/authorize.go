@@ -7,3 +7,7 @@ import (
 var optionsWithoutRouteCheck = []common.ServerOption{
 	common.ServerErrorEncoder(common.DefaultErrorEncoder),
 }
+
+var optionsWithoutAuth = []common.ServerOption{
+	common.ServerErrorEncoder(common.DefaultErrorEncoder),
+}

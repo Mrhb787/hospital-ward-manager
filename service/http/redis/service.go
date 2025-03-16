@@ -14,7 +14,8 @@ type Client struct {
 }
 
 type Service interface {
-	Client() (*Client, error)
+	NewClient() (*Client, error)
+	GetClient() (*Client, error)
 }
 
 type service struct {
@@ -26,7 +27,7 @@ func NewService(connStr string, client *Client) Service {
 	return &service{redisConn: connStr, client: client}
 }
 
-func (s *service) Client() (*Client, error) {
+func (s *service) NewClient() (*Client, error) {
 	opt, err := redis.ParseURL(s.redisConn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse Redis URL: %w", err)
@@ -42,8 +43,24 @@ func (s *service) Client() (*Client, error) {
 		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
+	redisClient := &Client{rdb: rdb}
+	s.client = redisClient
+
 	log.Println("Redis connection established")
-	return &Client{rdb: rdb}, nil
+	return redisClient, nil
+}
+
+func (s *service) GetClient() (*Client, error) {
+	redisClient := s.client
+	if redisClient == nil {
+		var err error
+		redisClient, err = s.NewClient()
+		if err != nil {
+			return nil, err
+		}
+		return redisClient, nil
+	}
+	return redisClient, nil
 }
 
 func (c *Client) Get(ctx context.Context, key string) (string, error) {

@@ -6,8 +6,10 @@ import (
 	"net/http"
 
 	"github.com/Mrhb787/hospital-ward-manager/configs"
+	"github.com/Mrhb787/hospital-ward-manager/service/http/auth"
 	"github.com/Mrhb787/hospital-ward-manager/service/http/database"
 	"github.com/Mrhb787/hospital-ward-manager/service/http/health"
+	"github.com/Mrhb787/hospital-ward-manager/service/http/redis"
 	"github.com/Mrhb787/hospital-ward-manager/transport"
 )
 
@@ -21,19 +23,29 @@ func init() {
 	appConfig := configs.New()
 
 	// database service
-	dbService := database.NewService(appConfig.Host, nil)
-
-	// connect client
-	client, err := dbService.Client()
-	if err != nil || client == nil {
-		log.Fatal("failed to connect database", err)
+	dbService := database.NewService(appConfig.DBConfig.Host, nil)
+	dbClient, err := dbService.NewClient()
+	if err != nil || dbClient == nil {
+		log.Fatal("Failed to connect database")
 	}
+
+	// redis service
+	redisService := redis.NewService(appConfig.RedisConfig.Host, nil)
+	redisClient, err := redisService.NewClient()
+	if err != nil || redisClient == nil {
+		log.Fatal("Failed to connect redis")
+	}
+
+	// auth service
+	authService := auth.NewService(dbService, redisService)
 
 	// health service
 	healthService := health.NewService()
 
 	// map http services
 	httpTransportRequest.DbService = dbService
+	httpTransportRequest.HealthService = healthService
+	httpTransportRequest.AuthService = authService
 	httpTransportRequest.HealthService = healthService
 }
 

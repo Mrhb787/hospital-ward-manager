@@ -1,7 +1,6 @@
 package configs
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/Mrhb787/hospital-ward-manager/common"
@@ -22,6 +21,10 @@ type DBConfig struct {
 	Password string
 }
 
+type RedisConfig struct {
+	Host string
+}
+
 type AppConfig struct {
 
 	// api configs
@@ -29,6 +32,9 @@ type AppConfig struct {
 
 	// database configs
 	DBConfig
+
+	// redis configs
+	RedisConfig
 
 	// service configs
 	ServiceConfig
@@ -40,6 +46,12 @@ func (db DBConfig) new() DBConfig {
 		Name:     getEnv("DB_NAME", ""),
 		User:     getEnv("DB_ADMIN", ""),
 		Password: getEnv("DB_ADMIN_PASSWORD", ""),
+	}
+}
+
+func (db RedisConfig) new() RedisConfig {
+	return RedisConfig{
+		Host: getEnv("REDIS_URL", ""),
 	}
 }
 
@@ -58,6 +70,7 @@ func (s ServiceConfig) new() ServiceConfig {
 func New() *AppConfig {
 	return &AppConfig{
 		DBConfig:      DBConfig{}.new(),
+		RedisConfig:   RedisConfig{}.new(),
 		APIConfig:     APIConfig{}.new(),
 		ServiceConfig: ServiceConfig{}.new(),
 	}
@@ -65,9 +78,6 @@ func New() *AppConfig {
 
 func getEnv(key, defaultValue string) string {
 	value := os.Getenv(key)
-
-	fmt.Println("key", key, "value", value)
-
 	if value == "" {
 		return defaultValue
 	}

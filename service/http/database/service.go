@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/Mrhb787/hospital-ward-manager/model"
 	_ "github.com/lib/pq"
@@ -13,8 +14,12 @@ type Client struct {
 }
 
 type Service interface {
-	Client() (*Client, error)
+	NewClient() (*Client, error)
+	GetClient() (*Client, error)
 	GetUserById(userId uint32) (model.User, error)
+	GetUserByPhone(phone string) (model.User, error)
+	CreateUserSession(session model.UserSession) (err error)
+	GetUserSession(token string, userId int) (session model.UserSession, err error)
 }
 
 type service struct {
@@ -26,7 +31,7 @@ func NewService(connStr string, client *Client) Service {
 	return &service{dbConn: connStr, client: client}
 }
 
-func (s *service) Client() (*Client, error) {
+func (s *service) NewClient() (*Client, error) {
 	db, err := sql.Open("postgres", s.dbConn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
@@ -36,9 +41,22 @@ func (s *service) Client() (*Client, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	fmt.Println("Database connection established")
+	log.Println("Database connection established")
 	s.client = &Client{DB: db}
 	return s.client, nil
+}
+
+func (s *service) GetClient() (*Client, error) {
+	dbClient := s.client
+	if dbClient == nil {
+		var err error
+		dbClient, err = s.NewClient()
+		if err != nil {
+			return nil, err
+		}
+		return dbClient, nil
+	}
+	return dbClient, nil
 }
 
 func (c *Client) Close() error {

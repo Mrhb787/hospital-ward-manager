@@ -36,6 +36,11 @@ type GetUserByIdReqquest struct {
 	UserId uint32
 }
 
+type SignInUserRequest struct {
+	Phone    string `json:"phone"`
+	Password string `json:"password"`
+}
+
 func EncodeGenericResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(map[string]interface{}{
@@ -76,6 +81,25 @@ func DecodeGetUserByIdRequest(ctx context.Context, r *http.Request) (request int
 		return req, errors.New("invalid user id")
 	}
 	req.UserId = uint32(userId)
+
+	return req, nil
+}
+
+func DecodeSignInUserRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
+	req := SignInUserRequest{}
+
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(req.Phone) != 10 {
+		return req, errors.New("invalid phone number")
+	}
+
+	if len(req.Password) <= 6 {
+		return req, errors.New("invalid password")
+	}
 
 	return req, nil
 }
